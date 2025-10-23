@@ -1,0 +1,75 @@
+import { Fragment } from "react";
+import PropTypes from "prop-types";
+import { Listbox, Transition } from "@headlessui/react";
+import { Check, ChevronDown } from "lucide-react";
+
+const CustomSelect = ({ value, onChange, options, label }) => {
+	return (
+		<div>
+			{label && (
+				<label className="block text-sm font-medium text-gray-700 mb-2">
+					{label}
+				</label>
+			)}
+			<Listbox value={value} onChange={onChange}>
+				<div className="relative">
+					<Listbox.Button className="relative w-full cursor-pointer rounded-lg bg-white py-3 pl-4 pr-10 text-left border border-gray-300 hover:border-ups-teal focus:outline-none focus:ring-2 focus:ring-ups-teal/20 focus:border-ups-teal transition-all">
+						<span className="block truncate text-gray-900">{value}</span>
+						<span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+							<ChevronDown
+								className="h-5 w-5 text-gray-400"
+								aria-hidden="true"
+							/>
+						</span>
+					</Listbox.Button>
+					<Transition
+						as={Fragment}
+						leave="transition ease-in duration-100"
+						leaveFrom="opacity-100"
+						leaveTo="opacity-0"
+					>
+						<Listbox.Options className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-lg bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+							{options.map((option, optionIdx) => (
+								<Listbox.Option
+									key={optionIdx}
+									className={({ active }) =>
+										`relative cursor-pointer select-none py-2.5 pl-10 pr-4 ${
+											active ? "bg-ups-gold/10 text-ups-brown" : "text-gray-900"
+										}`
+									}
+									value={option}
+								>
+									{({ selected }) => (
+										<>
+											<span
+												className={`block truncate ${
+													selected ? "font-semibold" : "font-normal"
+												}`}
+											>
+												{option}
+											</span>
+											{selected ? (
+												<span className="absolute inset-y-0 left-0 flex items-center pl-3 text-ups-brown">
+													<Check className="h-4 w-4" aria-hidden="true" />
+												</span>
+											) : null}
+										</>
+									)}
+								</Listbox.Option>
+							))}
+						</Listbox.Options>
+					</Transition>
+				</div>
+			</Listbox>
+		</div>
+	);
+};
+
+CustomSelect.propTypes = {
+	value: PropTypes.string.isRequired,
+	onChange: PropTypes.func.isRequired,
+	options: PropTypes.arrayOf(PropTypes.string).isRequired,
+	label: PropTypes.string,
+};
+
+export default CustomSelect;
