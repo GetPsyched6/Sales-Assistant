@@ -1,6 +1,14 @@
 import PropTypes from "prop-types";
-import { NavLink } from "react-router-dom";
-import { Home, TrendingUp, Users, Globe, X, Sparkles } from "lucide-react";
+import { NavLink, Link } from "react-router-dom";
+import {
+	Home,
+	TrendingUp,
+	Users,
+	Globe,
+	X,
+	Sparkles,
+	Search,
+} from "lucide-react";
 
 const Sidebar = ({ companyName, isOpen, onClose }) => {
 	const navItems = [
@@ -76,6 +84,19 @@ const Sidebar = ({ companyName, isOpen, onClose }) => {
 							</NavLink>
 						);
 					})}
+
+					{/* Separator */}
+					<div className="my-4 border-t border-gray-200"></div>
+
+					{/* Search New Company Button */}
+					<Link
+						to="/"
+						onClick={onClose}
+						className="flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 bg-gradient-to-r from-ups-gold to-amber-400 text-ups-brown hover:from-amber-400 hover:to-ups-gold font-semibold shadow-md hover:shadow-lg"
+					>
+						<Search size={20} />
+						<span>Search New Company</span>
+					</Link>
 				</nav>
 			</aside>
 		</>

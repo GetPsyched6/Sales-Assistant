@@ -1,5 +1,6 @@
 import { useState } from "react";
 import PropTypes from "prop-types";
+import { useParams } from "react-router-dom";
 import {
 	Zap,
 	FileText,
@@ -19,7 +20,7 @@ import {
 	Package,
 	Plane,
 } from "lucide-react";
-import { underArmourData } from "../../data/underarmour";
+import { getCompanyData } from "../../utils/companyData";
 import InsightsPodcastPlayer from "../home/components/InsightsPodcastPlayer";
 import {
 	BarChart,
@@ -36,7 +37,44 @@ import {
 
 const AISalesIntelligencePage = () => {
 	const [activeTab, setActiveTab] = useState("quick-insights");
-	const { aiSalesIntelligence, criticalInsights } = underArmourData;
+	const { companyName } = useParams();
+
+	// Get company data dynamically
+	const companyData = getCompanyData(companyName);
+
+	// Handle case where company data doesn't exist
+	if (!companyData) {
+		return (
+			<div className="flex items-center justify-center min-h-screen">
+				<div className="text-center">
+					<h2 className="text-2xl font-bold text-gray-900 mb-2">
+						Company Not Found
+					</h2>
+					<p className="text-gray-600">
+						Data for this company is not available.
+					</p>
+				</div>
+			</div>
+		);
+	}
+
+	const { aiSalesIntelligence, criticalInsights } = companyData;
+
+	// If no AI sales intelligence data, show message
+	if (!aiSalesIntelligence) {
+		return (
+			<div className="flex items-center justify-center min-h-screen">
+				<div className="text-center">
+					<h2 className="text-2xl font-bold text-gray-900 mb-2">
+						No AI Sales Intelligence Data
+					</h2>
+					<p className="text-gray-600">
+						AI sales intelligence data is not available for this company yet.
+					</p>
+				</div>
+			</div>
+		);
+	}
 
 	// Icon mapping for key findings and playbooks
 	const iconMap = {
@@ -86,40 +124,51 @@ const AISalesIntelligencePage = () => {
 				</p>
 			</div>
 
-			{/* Podcast Player */}
-			<InsightsPodcastPlayer />
+			{/* Podcast Player - Only show if company has a podcast */}
+			{companyData.companyInfo?.hasPodcast && (
+				<InsightsPodcastPlayer
+					companyName={companyName}
+					companyDisplayName={companyData.companyInfo.displayName}
+				/>
+			)}
 
 			{/* Total Program Potential Banner */}
-			<div className="relative overflow-hidden rounded-2xl bg-white border-2 border-ups-teal shadow-xl">
-				<div className="absolute inset-0 bg-gradient-to-br from-ups-teal/5 via-transparent to-ups-brown/5" />
-				<div className="relative p-6 md:p-8">
-					<div className="flex items-center justify-between flex-wrap gap-6">
-						<div className="flex-1 min-w-[200px]">
-							<div className="flex items-center gap-2 mb-2">
-								<div className="p-2 bg-ups-teal/10 rounded-lg">
-									<Target className="text-ups-teal" size={20} />
+			{aiSalesIntelligence.totalProgramPotential && (
+				<div className="relative overflow-hidden rounded-2xl bg-white border-2 border-ups-teal shadow-xl">
+					<div className="absolute inset-0 bg-gradient-to-br from-ups-teal/5 via-transparent to-ups-brown/5" />
+					<div className="relative p-6 md:p-8">
+						<div className="flex flex-col lg:flex-row items-center justify-between gap-6">
+							<div className="flex-1 w-full lg:w-auto text-center lg:text-left">
+								<div className="flex flex-col items-center lg:items-start gap-3 mb-3">
+									<div className="p-3 bg-ups-teal/10 rounded-lg">
+										<Target className="text-ups-teal" size={24} />
+									</div>
+									<div>
+										<h3 className="text-xl md:text-2xl font-bold text-gray-900">
+											Total Program Potential
+										</h3>
+										<p className="text-sm text-gray-600 leading-relaxed mt-2">
+											{aiSalesIntelligence.totalProgramPotential.description}
+										</p>
+									</div>
 								</div>
-								<h3 className="text-xl font-bold text-gray-900">
-									Total Program Potential
-								</h3>
 							</div>
-							<p className="text-sm text-gray-600 leading-relaxed">
-								{aiSalesIntelligence.totalProgramPotential.description}
-							</p>
-						</div>
-						<div className="text-right bg-gradient-to-br from-ups-teal/10 to-ups-brown/10 px-8 py-6 rounded-xl border border-ups-teal/20">
-							<div className="text-4xl md:text-5xl font-bold text-ups-teal mb-2">
-								{aiSalesIntelligence.totalProgramPotential.min}
-								<span className="text-2xl text-gray-400 mx-2">–</span>
-								{aiSalesIntelligence.totalProgramPotential.max}
+							<div className="text-center bg-gradient-to-br from-ups-teal/10 to-ups-brown/10 px-6 md:px-8 py-5 md:py-6 rounded-xl border border-ups-teal/20 flex-shrink-0">
+								<div className="text-3xl md:text-4xl lg:text-5xl font-bold text-ups-teal mb-2">
+									{aiSalesIntelligence.totalProgramPotential.min}
+									<span className="text-xl md:text-2xl text-gray-400 mx-2">
+										–
+									</span>
+									{aiSalesIntelligence.totalProgramPotential.max}
+								</div>
+								<p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+									Annual Value
+								</p>
 							</div>
-							<p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
-								Annual Value
-							</p>
 						</div>
 					</div>
 				</div>
-			</div>
+			)}
 
 			{/* Tabs Navigation - Clean Design */}
 			<div className="bg-white rounded-xl shadow-md p-2 overflow-x-auto">

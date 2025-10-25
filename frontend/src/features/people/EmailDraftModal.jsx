@@ -3,20 +3,22 @@ import PropTypes from "prop-types";
 import { motion } from "framer-motion";
 import { X, Paperclip, Send } from "lucide-react";
 
-const EmailDraftModal = ({ contact, onClose }) => {
+const EmailDraftModal = ({ contact, companyData, onClose }) => {
+	const companyDisplayName =
+		companyData?.companyInfo?.displayName || "your company";
+
 	const [emailData, setEmailData] = useState({
 		to: contact.email,
 		cc: "",
 		bcc: "",
-		subject:
-			"Elevate UnderArmour's shipment protection with InsureShield shipping insurance",
+		subject: `Elevate ${companyDisplayName}'s shipment protection with InsureShield shipping insurance`,
 		body: `Hi ${contact.name.split(" ")[0]},
 
-As Under Armour celebrates a decade of trusted operations with UPS, extending that reliability with InsureShield shipping insurance can add multi-carrier, multi-modal protection, porch piracy coverage, and data-driven risk insights for true peace of mind.
+As ${companyDisplayName} continues its trusted operations with UPS, extending that reliability with InsureShield shipping insurance can add multi-carrier, multi-modal protection, porch piracy coverage, and data-driven risk insights for true peace of mind.
 
 InsureShield protects against loss and damage across carriers and modes, with claims paid up to the invoice value of goods plus shipping expenses and convenient 24/7 portal access for management and reporting.
 
-Here are flexible program options that can align to Under Armour's workflows and growth:
+Here are flexible program options that can align to ${companyDisplayName}'s workflows and growth:
 
 - InsureShield Complete: one policy to protect everything from small parcels to freight, including air and ocean, designed around how products are made, moved, and sold.
 - InsureShield for UPS Packages: elect coverage conveniently from approved UPS system; with simple, consolidated administration tied to the existing UPS account structure.
@@ -27,9 +29,9 @@ Here are flexible program options that can align to Under Armour's workflows and
 
 The claims experience is fast and digital—submit online with guided documentation, track status in the portal 24/7, and benefit from payments in days rather than weeks for covered claims.
 
-InsureShield also leverages enriched delivery data and predictive analytics to help anticipate shipping outcomes, which can inform smarter coverage rules and post-purchase experiences for Under Armour's customers.
+InsureShield also leverages enriched delivery data and predictive analytics to help anticipate shipping outcomes, which can inform smarter coverage rules and post-purchase experiences for ${companyDisplayName}'s customers.
 
-If helpful, a brief introduction call can align on lanes, modes, and system connections—whether via APIs, or approved UPS systems—so the program matches Under Armour's SKUs, order values, and destinations from day one.
+If helpful, a brief introduction call can align on lanes, modes, and system connections—whether via APIs, or approved UPS systems—so the program matches ${companyDisplayName}'s SKUs, order values, and destinations from day one.
 
 Warm regards,
 Michael Smith
@@ -195,6 +197,7 @@ EmailDraftModal.propTypes = {
 		email: PropTypes.string.isRequired,
 		name: PropTypes.string.isRequired,
 	}).isRequired,
+	companyData: PropTypes.object.isRequired,
 	onClose: PropTypes.func.isRequired,
 };
 

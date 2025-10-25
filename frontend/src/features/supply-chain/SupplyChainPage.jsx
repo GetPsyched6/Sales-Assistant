@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useParams } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import {
 	ComposableMap,
@@ -8,13 +9,28 @@ import {
 	Line,
 } from "react-simple-maps";
 import { Filter, Calendar } from "lucide-react";
-import { underArmourData } from "../../data/underarmour";
+import { getCompanyData } from "../../utils/companyData";
 import CustomSelect from "../../shared/components/CustomSelect";
 
 const geoUrl = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";
 
 const SupplyChainPage = () => {
-	const { supplyChain } = underArmourData;
+	const { companyName } = useParams();
+	const companyData = getCompanyData(companyName);
+
+	// Handle case where company data doesn't exist
+	if (!companyData || !companyData.supplyChain) {
+		return (
+			<div className="flex items-center justify-center min-h-screen">
+				<div className="text-center">
+					<h2 className="text-2xl font-bold text-gray-900 mb-2">No Supply Chain Data</h2>
+					<p className="text-gray-600">Supply chain data is not available for this company.</p>
+				</div>
+			</div>
+		);
+	}
+
+	const { supplyChain } = companyData;
 	const [fromCountry, setFromCountry] = useState("All Countries");
 	const [toCountry, setToCountry] = useState("All Countries");
 	const [showFilterPanel, setShowFilterPanel] = useState(false);

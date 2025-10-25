@@ -1,4 +1,5 @@
 import PropTypes from "prop-types";
+import { useParams } from "react-router-dom";
 import {
 	BarChart,
 	Bar,
@@ -17,10 +18,25 @@ import {
 	AlertCircle,
 	CheckCircle,
 } from "lucide-react";
-import { underArmourData } from "../../data/underarmour";
+import { getCompanyData } from "../../utils/companyData";
 
 const CriticalInsightsPage = () => {
-	const { criticalInsights } = underArmourData;
+	const { companyName } = useParams();
+	const companyData = getCompanyData(companyName);
+
+	// Handle case where company data doesn't exist
+	if (!companyData || !companyData.criticalInsights) {
+		return (
+			<div className="flex items-center justify-center min-h-screen">
+				<div className="text-center">
+					<h2 className="text-2xl font-bold text-gray-900 mb-2">No Critical Insights Data</h2>
+					<p className="text-gray-600">Critical insights data is not available for this company.</p>
+				</div>
+			</div>
+		);
+	}
+
+	const { criticalInsights } = companyData;
 	const { external, upsInsights, shipmentVolume, insuredPackagesAndClaims } =
 		criticalInsights;
 

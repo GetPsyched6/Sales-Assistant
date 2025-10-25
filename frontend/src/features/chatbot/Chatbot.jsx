@@ -1,13 +1,19 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import PropTypes from "prop-types";
+import { useParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Send, Mic, X } from "lucide-react";
+import { Send, Mic, X, Loader2 } from "lucide-react";
+import { getCompanyData } from "../../utils/companyData";
 
 const Chatbot = ({ onClose }) => {
+	const { companyName } = useParams();
+	const companyData = getCompanyData(companyName);
+	const companyDisplayName = companyData?.companyInfo?.displayName || "this company";
+
 	const [messages, setMessages] = useState([
 		{
 			id: 1,
-			text: "Hello! I'm Eia, your AI chat assistant. Available 24/7 to answer any questions you have. Let's chat!",
+			text: `Hello! I'm Eia, your AI chat assistant. I have detailed information about ${companyDisplayName} and I'm available 24/7 to answer any questions you have. Let's chat!`,
 			sender: "bot",
 			timestamp: new Date().toLocaleTimeString([], {
 				hour: "2-digit",
@@ -16,58 +22,28 @@ const Chatbot = ({ onClose }) => {
 		},
 	]);
 	const [inputMessage, setInputMessage] = useState("");
+	const [isLoading, setIsLoading] = useState(false);
+	const [error, setError] = useState(null);
+	const messagesEndRef = useRef(null);
 
-	const mockResponses = {
-		underarmour:
-			"Under Armour offers a range of athletic performance products including HeatGear®, ColdGear® apparel, Curry Brand basketball shoes, and UA Flow performance footwear. They're currently a UPS customer with significant shipping volume across North America and international markets.",
-		products:
-			"Under Armour's popular product lines include: HeatGear® and ColdGear® apparel technology, Curry Brand basketball shoes featuring UA Flow cushioning, UA Halo footwear line, training & fitness gear, and team sports equipment.",
-		shipping:
-			"Under Armour ships worldwide with primary routes from Vietnam, Jordan, China, Cambodia, and Indonesia to US and EU markets. They use a mix of ocean freight, air, and truck transportation modes.",
-		contact:
-			"Key decision makers at Under Armour include Shawn Curran (Chief Supply Chain Officer), Kevin Plank (CEO), and Dave Bergman (CFO). You can reach out to them through the People tab.",
-		default:
-			"I can help you with information about Under Armour's business, products, shipping operations, key contacts, and sales opportunities. What would you like to know more about?",
-	};
+	// Auto-scroll to bottom when messages change
+	useEffect(() => {
+		messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+	}, [messages]);
 
-	const getBotResponse = (userMessage) => {
-		const lowerMessage = userMessage.toLowerCase();
-
-		if (
-			lowerMessage.includes("product") ||
-			(lowerMessage.includes("what") && lowerMessage.includes("offer"))
-		) {
-			return mockResponses.products;
-		} else if (
-			lowerMessage.includes("ship") ||
-			lowerMessage.includes("supply")
-		) {
-			return mockResponses.shipping;
-		} else if (
-			lowerMessage.includes("contact") ||
-			lowerMessage.includes("people") ||
-			lowerMessage.includes("who")
-		) {
-			return mockResponses.contact;
-		} else if (
-			lowerMessage.includes("underarmour") ||
-			lowerMessage.includes("under armour")
-		) {
-			return mockResponses.underarmour;
-		} else {
-			return mockResponses.default;
-		}
-	};
-
-	const handleSend = (e) => {
+	const handleSend = async (e) => {
 		e.preventDefault();
 
-		if (!inputMessage.trim()) return;
+		if (!inputMessage.trim() || isLoading) return;
+
+		const userMessageText = inputMessage;
+		setInputMessage("");
+		setError(null);
 
 		// Add user message
 		const userMessage = {
-			id: messages.length + 1,
-			text: inputMessage,
+			id: Date.now(),
+			text: userMessageText,
 			sender: "user",
 			timestamp: new Date().toLocaleTimeString([], {
 				hour: "2-digit",
@@ -76,21 +52,69 @@ const Chatbot = ({ onClose }) => {
 		};
 
 		setMessages((prev) => [...prev, userMessage]);
-		setInputMessage("");
+		setIsLoading(true);
 
-		// Simulate bot response after a short delay
-		setTimeout(() => {
-			const botResponse = {
-				id: messages.length + 2,
-				text: getBotResponse(inputMessage),
+		try {
+			// Prepare conversation history (last 10 messages for context)
+			const conversationHistory = messages.slice(-10).map((msg) => ({
+				role: msg.sender === "user" ? "user" : "assistant",
+				content: msg.text,
+			}));
+
+			// Call backend API
+			const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+			const response = await fetch(`${API_URL}/api/chat`, {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({
+					message: userMessageText,
+					companyContext: companyData,
+					conversationHistory,
+				}),
+			});
+
+			if (!response.ok) {
+				const errorData = await response.json().catch(() => ({}));
+				throw new Error(errorData.detail || `API error: ${response.status}`);
+			}
+
+			const data = await response.json();
+
+			if (data.success && data.response) {
+				const botResponse = {
+					id: Date.now() + 1,
+					text: data.response,
+					sender: "bot",
+					timestamp: new Date().toLocaleTimeString([], {
+						hour: "2-digit",
+						minute: "2-digit",
+					}),
+				};
+				setMessages((prev) => [...prev, botResponse]);
+			} else {
+				throw new Error(data.error || "Failed to get response from AI");
+			}
+		} catch (err) {
+			console.error("Chat error:", err);
+			setError(err.message);
+
+			// Add error message as a bot response
+			const errorMessage = {
+				id: Date.now() + 1,
+				text: `I'm sorry, I encountered an error: ${err.message}. Please try again or check if the backend server is running.`,
 				sender: "bot",
 				timestamp: new Date().toLocaleTimeString([], {
 					hour: "2-digit",
 					minute: "2-digit",
 				}),
+				isError: true,
 			};
-			setMessages((prev) => [...prev, botResponse]);
-		}, 1000);
+			setMessages((prev) => [...prev, errorMessage]);
+		} finally {
+			setIsLoading(false);
+		}
 	};
 
 	return (
@@ -145,45 +169,74 @@ const Chatbot = ({ onClose }) => {
 							className={`max-w-[80%] rounded-2xl px-4 py-3 ${
 								message.sender === "user"
 									? "bg-amber-100 text-gray-900"
+									: message.isError
+									? "bg-red-100 text-red-900"
 									: "bg-gray-200 text-gray-900"
 							}`}
 						>
-							<p className="text-sm leading-relaxed">{message.text}</p>
+							<p className="text-sm leading-relaxed whitespace-pre-wrap">{message.text}</p>
 						</div>
 					</motion.div>
 				))}
+				{/* Loading indicator */}
+				{isLoading && (
+					<motion.div
+						initial={{ opacity: 0, y: 10 }}
+						animate={{ opacity: 1, y: 0 }}
+						className="flex justify-start"
+					>
+						<div className="bg-gray-200 text-gray-900 rounded-2xl px-4 py-3 flex items-center gap-2">
+							<Loader2 size={16} className="animate-spin" />
+							<span className="text-sm">Eia is typing...</span>
+						</div>
+					</motion.div>
+				)}
+				{/* Auto-scroll anchor */}
+				<div ref={messagesEndRef} />
 			</div>
 
 			{/* Input */}
 			<div className="p-3 md:p-4 bg-white border-t">
+				{error && (
+					<div className="mb-2 p-2 bg-red-50 border border-red-200 rounded text-xs text-red-700">
+						{error}
+					</div>
+				)}
 				<form onSubmit={handleSend} className="relative">
 					<input
 						type="text"
 						value={inputMessage}
 						onChange={(e) => setInputMessage(e.target.value)}
-						placeholder="Ask me anything..."
-						className="w-full px-3 md:px-4 py-2.5 md:py-3 pr-20 md:pr-24 rounded-full border border-gray-300 focus:border-ups-teal focus:ring-2 focus:ring-ups-teal/20 outline-none text-xs md:text-sm"
+						placeholder={isLoading ? "Waiting for response..." : "Ask me anything..."}
+						disabled={isLoading}
+						className="w-full px-3 md:px-4 py-2.5 md:py-3 pr-20 md:pr-24 rounded-full border border-gray-300 focus:border-ups-teal focus:ring-2 focus:ring-ups-teal/20 outline-none text-xs md:text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
 						maxLength={2000}
 					/>
 					<div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1 md:gap-2">
 						<button
 							type="button"
-							className="p-1.5 md:p-2 hover:bg-gray-100 rounded-full transition-colors"
+							disabled={isLoading}
+							className="p-1.5 md:p-2 hover:bg-gray-100 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
 							aria-label="Voice input"
 						>
 							<Mic size={18} className="md:w-5 md:h-5 text-gray-500" />
 						</button>
 						<button
 							type="submit"
-							className="p-1.5 md:p-2 bg-ups-teal hover:bg-ups-teal-dark text-white rounded-full transition-colors"
+							disabled={isLoading || !inputMessage.trim()}
+							className="p-1.5 md:p-2 bg-ups-teal hover:bg-ups-teal-dark text-white rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
 							aria-label="Send message"
 						>
-							<Send size={18} className="md:w-5 md:h-5" />
+							{isLoading ? (
+								<Loader2 size={18} className="md:w-5 md:h-5 animate-spin" />
+							) : (
+								<Send size={18} className="md:w-5 md:h-5" />
+							)}
 						</button>
 					</div>
 				</form>
 				<p className="text-xs text-gray-400 text-center mt-2">
-					0/{inputMessage.length > 0 ? inputMessage.length : "2000"}
+					{inputMessage.length}/2000
 				</p>
 			</div>
 		</motion.div>

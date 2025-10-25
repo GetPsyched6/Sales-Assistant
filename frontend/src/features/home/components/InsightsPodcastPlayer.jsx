@@ -1,7 +1,9 @@
 import { useState, useRef, useEffect } from "react";
+import PropTypes from "prop-types";
 import { Play, Pause, Download, Sparkles } from "lucide-react";
 
-const InsightsPodcastPlayer = () => {
+const InsightsPodcastPlayer = ({ companyName, companyDisplayName }) => {
+	const audioFileName = `${companyName}.mp3`;
 	const [isPlaying, setIsPlaying] = useState(false);
 	const [currentTime, setCurrentTime] = useState(0);
 	const [duration, setDuration] = useState(0);
@@ -64,7 +66,7 @@ const InsightsPodcastPlayer = () => {
 					</div>
 					<div>
 						<h3 className="text-base font-bold text-white mb-1">
-							Under Armour Sales Strategy Briefing
+							{companyDisplayName} Sales Strategy Briefing
 						</h3>
 						<p className="text-xs text-gray-300">
 							15-minute AI-generated executive brief on cross-sell
@@ -92,8 +94,8 @@ const InsightsPodcastPlayer = () => {
 					<button
 						onClick={() => {
 							const link = document.createElement("a");
-							link.href = "/audio/sales-insights-podcast.mp3";
-							link.download = "underarmour-sales-insights.mp3";
+							link.href = `/audio/${audioFileName}`;
+							link.download = `${companyName}-sales-insights.mp3`;
 							link.click();
 						}}
 						className="p-2.5 bg-white/10 hover:bg-white/20 text-white rounded-full transition-colors"
@@ -107,7 +109,7 @@ const InsightsPodcastPlayer = () => {
 			{/* Audio Element */}
 			<audio
 				ref={audioRef}
-				src="/audio/sales-insights-podcast.mp3"
+				src={`/audio/${audioFileName}`}
 				preload="metadata"
 			/>
 
@@ -134,6 +136,11 @@ const InsightsPodcastPlayer = () => {
 			</div>
 		</div>
 	);
+};
+
+InsightsPodcastPlayer.propTypes = {
+	companyName: PropTypes.string.isRequired,
+	companyDisplayName: PropTypes.string.isRequired,
 };
 
 export default InsightsPodcastPlayer;

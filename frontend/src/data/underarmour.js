@@ -14,6 +14,7 @@ export const underArmourData = {
         isUPSCustomer: true,
         customerSince: 2008,
         shipsWorldwide: true,
+        hasPodcast: true,
     },
 
     // Financials
@@ -21,34 +22,34 @@ export const underArmourData = {
         revenue: {
             value: 1234, // $1.234B
             label: "$1,234M",
-            period: "Last Quarter (Q1 FY26)",
-            change: "+25%",
+            period: "Last Quarter (Q4 FY25)",
+            change: "+10.9%",
             trend: "up",
-            details: "Q1 FY26 ended Jun 30, 2025"
+            details: "Q2 FY2025 growth +10.9% YoY"
         },
         grossMargin: {
-            value: 48.2,
-            label: "48.2%",
-            period: "From last quarter",
-            change: "+15%",
+            value: 47.9,
+            label: "47.9%",
+            period: "Full Year FY25",
+            change: "+180 bps",
             trend: "up",
-            details: "↑70 bps YoY"
+            details: "Gross profit ~$839.2M"
         },
-        profit: {
-            value: 6534, // Adjusted for demo
-            label: "$6,534M",
-            period: "From last month",
-            change: "+10%",
+        cashPosition: {
+            value: 885,
+            label: "$885M",
+            period: "Quarter End",
+            change: "+8%",
             trend: "up",
-            details: "Operating income improving"
+            details: "Cash on hand, no borrowings on $1.1B revolver"
         },
-        loss: {
-            value: 1875,
-            label: "$1,875M",
-            period: "From last month",
-            change: "7%",
-            trend: "down",
-            details: "FY25 GAAP NI impact reducing"
+        inventory: {
+            value: 1100,
+            label: "$1.1B",
+            period: "Quarter End",
+            change: "-15%",
+            trend: "up",
+            details: "Inventory optimization reducing costs"
         }
     },
 
@@ -894,7 +895,7 @@ export const underArmourData = {
         totalProgramPotential: {
             min: "$5.2M",
             max: "$8.7M",
-            description: "annual value (savings + growth), assuming phased adoption"
+            description: "Annualized value (savings + growth) from recommended offers (modeled)."
         }
     }
 };

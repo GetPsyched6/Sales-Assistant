@@ -10,38 +10,97 @@ const SearchPage = () => {
 	const [isLoading, setIsLoading] = useState(false);
 	const navigate = useNavigate();
 
+	// Fuzzy string matching helper (Levenshtein distance)
+	const levenshteinDistance = (str1, str2) => {
+		const matrix = [];
+		for (let i = 0; i <= str2.length; i++) {
+			matrix[i] = [i];
+		}
+		for (let j = 0; j <= str1.length; j++) {
+			matrix[0][j] = j;
+		}
+		for (let i = 1; i <= str2.length; i++) {
+			for (let j = 1; j <= str1.length; j++) {
+				if (str2.charAt(i - 1) === str1.charAt(j - 1)) {
+					matrix[i][j] = matrix[i - 1][j - 1];
+				} else {
+					matrix[i][j] = Math.min(
+						matrix[i - 1][j - 1] + 1,
+						matrix[i][j - 1] + 1,
+						matrix[i - 1][j] + 1
+					);
+				}
+			}
+		}
+		return matrix[str2.length][str1.length];
+	};
+
+	const matchCompany = (query) => {
+		// Normalize: lowercase, remove spaces, punctuation
+		const normalized = query.toLowerCase().replace(/[^a-z0-9]/g, "");
+
+		// Define company patterns
+		const companies = [
+			{
+				id: "underarmour",
+				patterns: ["underarmour", "under", "armour", "ua"],
+				fullName: "Under Armour",
+			},
+			{
+				id: "ingram",
+				patterns: ["ingram", "ingrammicro", "micro"],
+				fullName: "Ingram Micro",
+			},
+		];
+
+		// Check for exact or partial matches
+		for (const company of companies) {
+			for (const pattern of company.patterns) {
+				if (normalized.includes(pattern) || pattern.includes(normalized)) {
+					return company;
+				}
+			}
+		}
+
+		// Fuzzy matching for typos (within 2 character edits)
+		for (const company of companies) {
+			for (const pattern of company.patterns) {
+				const distance = levenshteinDistance(normalized, pattern);
+				if (distance <= 2 && normalized.length >= 3) {
+					return company;
+				}
+			}
+		}
+
+		return null;
+	};
+
 	const handleSearch = (e) => {
 		e.preventDefault();
 
 		if (!searchQuery.trim()) return;
 
-		// For demo, only handle "Under Armour" or "underarmour"
-		const normalizedQuery = searchQuery
-			.toLowerCase()
-			.replace(/\s+/g, "")
-			.trim();
+		const matchedCompany = matchCompany(searchQuery);
 
-		if (
-			normalizedQuery.includes("underarmour") ||
-			normalizedQuery.includes("under")
-		) {
+		if (matchedCompany) {
 			setIsLoading(true);
 
 			// Show loader for 3 seconds
 			setTimeout(() => {
 				setIsLoading(false);
-				navigate("/dashboard/underarmour/home");
+				navigate(`/dashboard/${matchedCompany.id}/home`);
 			}, 3000);
 		} else {
 			// Show a message for other companies
 			alert(
-				'Demo is currently available only for Under Armour. Please search for "Under Armour".'
+				'Demo is currently available only for Under Armour and Ingram Micro. Please search for one of these companies.'
 			);
 		}
 	};
 
 	if (isLoading) {
-		return <Loader message="Analyzing Under Armour..." />;
+		const matchedCompany = matchCompany(searchQuery);
+		return <Loader message={`Analyzing ${matchedCompany?.fullName || 'company'}...`} />;
 	}
 
 	return (
@@ -99,9 +158,9 @@ const SearchPage = () => {
 						</h3>
 						<p className="text-xs md:text-sm text-gray-600">
 							This demo is currently configured for{" "}
-							<span className="font-semibold text-ups-brown">Under Armour</span>
-							. Try searching for &ldquo;Under Armour&rdquo; to see the full
-							sales assistant in action.
+							<span className="font-semibold text-ups-brown">Under Armour</span> and{" "}
+							<span className="font-semibold text-ups-brown">Ingram Micro</span>
+							. Try searching for either company to see the full sales assistant in action.
 						</p>
 					</motion.div>
 
